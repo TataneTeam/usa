@@ -341,7 +341,8 @@
     var drawDay = function () {
       // Init de la map
       var map = new google.maps.Map(document.getElementById('map_canvas'), {
-        mapTypeId: google.maps.MapTypeId.ROADMAP
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        scaleControl: true
       });
 
       var rendererOptions = { map: map, suppressMarkers: true};
@@ -401,7 +402,9 @@
           $scope.directions.push({hour: row[3].substring(11, 16), title: row[5], duration: row[6]});
         }
       }
-      map.fitBounds(bounds);
+      setTimeout(function () {
+        map.fitBounds(bounds);
+      }, 1000);
     };
 
     // hack dégueulasse pour réussir à avoir un fitBounds qui fonctionne
