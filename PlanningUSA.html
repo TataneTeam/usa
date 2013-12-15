@@ -455,7 +455,7 @@
         link: function postLink(scope, iElement, iAttrs) {
 
           var map = new google.maps.Map(iElement[0], scope.options);
-          var rendererOptions = { map: map, suppressMarkers: true};
+          var rendererOptions = { map: map, suppressMarkers: true, preserveViewport: true};
 
           scope.$watch('markers', function () {
             scope.bounds = new google.maps.LatLngBounds();
@@ -471,9 +471,6 @@
               var directionsDisplay = new google.maps.DirectionsRenderer(rendererOptions);
               directionsDisplay.setMap(map);
               directionsDisplay.setDirections(direction);
-            });
-            $timeout(function () {
-              map.fitBounds(scope.bounds);
             });
           }, true);
         }
