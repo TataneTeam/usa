@@ -345,18 +345,20 @@
       $scope.markers = [];
       $scope.itineraires = [];
 
-      var start = '';
+      var start;
 
       for (var i = 1; i < $scope.sheetData.length; i++) {
         var row = $scope.sheetData[i];
         if (row[0] == $scope.day && row[10] != '' && row[10] != '#N/A') {
 
+          var title = row[5];
           var gps = row[10].split(' ');
-          var pos = new google.maps.LatLng(gps[0], gps[1]);
+          var pos = {
+            position: new google.maps.LatLng(gps[0], gps[1]),
+            title: title
+          };
 
-          if (start == '') {
-            start = pos;
-          } else {
+          if (start != undefined) {
             directionsService(start, pos).then(function (response) {
               var route = response.routes[0];
               $scope.itineraires.push(response);
@@ -366,15 +368,11 @@
                 $scope.total.time += route.legs[i].duration.value;
               }
             });
-            start = pos;
           }
+          start = pos;
 
-          $scope.markers.push(new google.maps.Marker({
-            position: pos,
-            title: row[5]
-          }));
-
-          $scope.directions.push({hour: row[3].substring(11, 16), title: row[5], duration: row[6]});
+          $scope.markers.push(new google.maps.Marker(pos));
+          $scope.directions.push({hour: row[3].substring(11, 16), title: title, duration: row[6]});
         }
       }
     });
@@ -410,13 +408,19 @@
       return function (start, end) {
         var defer = $q.defer();
         var request = {
-          origin: start,
-          destination: end,
+          origin: start.position,
+          destination: end.position,
           travelMode: google.maps.TravelMode.DRIVING,
           unitSystem: google.maps.UnitSystem.METRIC
         };
         directionsService.route(request, function (response, status) {
           if (status == google.maps.DirectionsStatus.OK) {
+            response.routes.forEach(function(route) {
+              route.legs.forEach(function(leg) {
+                leg.start_address = start.title;
+                leg.end_address = end.title;
+              });
+            });
             defer.resolve(response);
           } else {
             defer.reject(status);
