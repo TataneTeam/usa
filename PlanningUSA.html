@@ -217,7 +217,7 @@
   <div id="view" ng-view></div>
 
   <script type="text/ng-template" id="itineraire.html">
-    <div gmaps id="map_canvas" options="options" markers="markers" itineraires="itineraires"></div>
+    <div gmaps id="map_canvas" markers="markers" itineraires="itineraires"></div>
     <div id="itineraire">
       <div class="innerItineraire">
         <div class="resume">
@@ -337,11 +337,6 @@
       $scope.directions = [];
       $scope.routes = [];
       $scope.day = $routeParams.day;
-
-      $scope.options = {
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        scaleControl: true
-      };
       $scope.markers = [];
       $scope.itineraires = [];
 
@@ -452,22 +447,23 @@
       return {
         restrict: 'A',
         scope: {
-          options: '=options',
           markers: '=markers',
           itineraires: "=itineraires"
         },
         link: function postLink(scope, iElement, iAttrs) {
 
-          var map = new google.maps.Map(iElement[0], scope.options);
+          var map = new google.maps.Map(iElement[0], {
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            scaleControl: true
+          });
           var rendererOptions = { map: map, suppressMarkers: true, preserveViewport: true};
+          scope.bounds = new google.maps.LatLngBounds();
 
           scope.$watch('markers', function () {
-            scope.bounds = new google.maps.LatLngBounds();
             scope.markers.forEach(function (marker) {
               marker.setMap(map);
               scope.bounds.extend(marker.getPosition());
             });
-            map.fitBounds(scope.bounds);
           });
 
           scope.$watch('itineraires', function () {
@@ -475,7 +471,19 @@
               var directionsDisplay = new google.maps.DirectionsRenderer(rendererOptions);
               directionsDisplay.setMap(map);
               directionsDisplay.setDirections(direction);
+              direction.routes.forEach(function(route) {
+                route.legs.forEach(function(leg) {
+                  leg.steps.forEach(function(step) {
+                    scope.bounds.extend(step.start_location);
+                    scope.bounds.extend(step.end_location);
+                  })
+                });
+              });
             });
+          }, true);
+
+          scope.$watch('bounds', function () {
+            map.fitBounds(scope.bounds);
           }, true);
         }
       };
