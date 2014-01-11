@@ -195,7 +195,7 @@
         <div class="resume">
           <div class="title">Résumé :</div>
           <div ng-repeat="direction in directions">
-            {{ direction.hour }} - <b>{{ direction.title }}</b> <i>({{ direction.duration }})</i>
+            {{ direction.hour }} - <b>{{ direction.title }}</b> <i ng-show="direction.duration">({{ direction.duration }})</i>
           </div>
           <div id="total_panel" ng-show="total">
             <br/><b>Total:</b> {{ total.dist | distance }} - {{ total.time | duree }}
@@ -300,21 +300,29 @@
       $scope.itineraires = [];
 
       var points = [];
+      var prevDayPos = null;
 
       for (var i = 1; i < $scope.sheetData.length; i++) {
         var row = $scope.sheetData[i];
-        if (row[0] == $scope.day && row[10] != '' && row[10] != '#N/A') {
-
+        if ((row[0] == $scope.day - 1 || row[0] == $scope.day) && row[10] != '' && row[10] != '#N/A') {
           var title = row[5];
           var gps = row[10].split(' ');
           var pos = {
             position: new google.maps.LatLng(gps[0], gps[1]),
             title: title
           };
+          if (row[0] == $scope.day - 1) {
+            prevDayPos = pos;
+          } else {
+            if (prevDayPos != null) {
+              points.push(prevDayPos);
+              $scope.directions.push({title: prevDayPos.title});
+              prevDayPos = null;
+            }
 
-          points.push(pos);
-
-          $scope.directions.push({hour: row[3].substring(11, 16), title: title, duration: row[6]});
+            points.push(pos);
+            $scope.directions.push({hour: row[3].substring(11, 16), title: title, duration: row[6]});
+          }
         }
       }
 
